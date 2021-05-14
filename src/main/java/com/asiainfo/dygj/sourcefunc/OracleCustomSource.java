@@ -11,14 +11,12 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 
-/***********************************
- *@Desc TODO
- *@ClassName OracleCustomSource
- *@Author DLX
- *@Data 2020/8/17 14:07
- *@Since JDK1.8
- *@Version 1.0
- ***********************************/
+/**
+ * @program: cmzjdatadygjfuse
+ * @description: 读取Oracle数据信息
+ * @author: Mr.Deng -> Mr.Liu
+ * @create: 2021-05-14 16:04
+ **/
 public class OracleCustomSource extends RichSourceFunction<Map<String, BaseStationInfo>> {
     private transient Connection conn = null;
     private transient PreparedStatement preparedStatement = null;
@@ -33,38 +31,38 @@ public class OracleCustomSource extends RichSourceFunction<Map<String, BaseStati
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
         Class.forName(DRIVER_CLASS).newInstance();
-        System.out.println("1.加载驱动:"+DRIVER_CLASS);
+        System.out.println("1.加载驱动:" + DRIVER_CLASS);
     }
 
     @Override
     public void run(SourceContext<Map<String, BaseStationInfo>> sourceContext) throws Exception {
         String sql = "SELECT DISTINCT LAC_CI,CITY_ID,COUNTY_ID FROM I_CDM_LACCI";
-        System.out.println("2.加载SQL:"+sql);
-        while(flag){
-            try{
+        System.out.println("2.加载SQL:" + sql);
+        while (flag) {
+            try {
                 resultMap.clear();
-                conn = DriverManager.getConnection(URL,USERNAME,PASSWORD);
-                System.out.println("3.获取连接:"+conn);
+                conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                System.out.println("3.获取连接:" + conn);
                 preparedStatement = conn.prepareStatement(sql);
-                System.out.println("4.执行查询:"+preparedStatement);
+                System.out.println("4.执行查询:" + preparedStatement);
                 ResultSet resultSet = preparedStatement.executeQuery();
                 System.out.print("5.查询成功");
-                while (resultSet.next()){
+                while (resultSet.next()) {
                     String lac_ci = resultSet.getString("LAC_CI");
                     String city_id = resultSet.getString("CITY_ID");
                     String county_id = resultSet.getString("COUNTY_ID");
-                    System.out.println("正在组装Map:"+lac_ci+"|"+city_id+"|"+county_id);
-                    resultMap.put(lac_ci, BaseStationInfo.of(lac_ci,city_id,county_id));
+                    System.out.println("正在组装Map:" + lac_ci + "|" + city_id + "|" + county_id);
+                    resultMap.put(lac_ci, BaseStationInfo.of(lac_ci, city_id, county_id));
                 }
                 sourceContext.collect(resultMap);
-            }finally {
-                if (preparedStatement != null){
+            } finally {
+                if (preparedStatement != null) {
                     preparedStatement.close();
                 }
-                if (conn != null){
+                if (conn != null) {
                     conn.close();
                 }
-                Thread.sleep(1000*60*60*12);
+                Thread.sleep(1000 * 60 * 60 * 12);
             }
         }
     }

@@ -20,24 +20,17 @@ import org.apache.flink.util.Collector;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/***********************************
- *@Desc TODO
- *@ClassName FusionDataCompress
- *@Author DLX
- *@Data 2020/9/11 11:45
- *@Since JDK1.8
- *@Version 1.0
- ***********************************/
+/**
+ * @program: cmzjdatadygjfuse
+ * @description: 剔除Topic：MULTIPLE_SOURCE_FUSION 5分钟内数据
+ * @author: Mr.Deng -> Mr.Liu
+ * @create: 2021-05-14 16:04
+ **/
 public class FusionDataCompress {
     private static long time = System.currentTimeMillis();
 
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        /**
-         * int failureRate
-         * Time failureInterval
-         * Time delayInterval
-         */
         env.setRestartStrategy(RestartStrategies.failureRateRestart(
                 3,
                 org.apache.flink.api.common.time.Time.of(5, TimeUnit.MINUTES),
@@ -47,6 +40,7 @@ public class FusionDataCompress {
         String consumerGroupId = paraTool.get("consumer.group.id", UUID.randomUUID().toString());
         System.out.println("consumerGroupId:" + consumerGroupId);
 
+        /*获取MULTIPLE_SOURCE_FUSION数据，封装为SignalFormat类型*/
         DataStream<String> fusionStream = KafkaConsumer.createKafkaStream(env, "zz", "MULTIPLE_SOURCE_FUSION" + consumerGroupId, "MULTIPLE_SOURCE_FUSION", 60, SimpleStringSchema.class);
         SingleOutputStreamOperator<SignalFormat> formatDataStream = fusionStream.flatMap(new RichFlatMapFunction<String, SignalFormat>() {
             private transient Counter counter;
@@ -70,9 +64,10 @@ public class FusionDataCompress {
             }
         }).name("KafkaFlatMapData");
 
+        /*5分钟清除数据库中过期状态*/
         SingleOutputStreamOperator<SignalFormat> fuseReduceStream = formatDataStream.filter(new PhoneTimeIntervalFilterFunction()).name("FusionFilter");
 
-        //统计Multi数据发送情况
+        /*统计入Topic:STREAM_CENTER_TRACE_MINUTER的数据量情况*/
 //        fuseReduceStream.addSink(new FusionMonitor());
 
         SingleOutputStreamOperator<String> stringStream = fuseReduceStream.map(new RichMapFunction<SignalFormat, String>() {

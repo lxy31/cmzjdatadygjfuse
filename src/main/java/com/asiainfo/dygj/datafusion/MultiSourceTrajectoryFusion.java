@@ -30,14 +30,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/***********************************
- *@Desc TODO
- *@ClassName MultiSourceTrajectoryFusion
- *@Author DLX
- *@Data 2020/8/11 10:13
- *@Since JDK1.8
- *@Version 1.0
- ***********************************/
+/**
+ * @program: cmzjdatadygjfuse
+ * @description: 多个Topic数据进行融合处理
+ * @author: Mr.Deng -> Mr.Liu
+ * @create: 2021-05-14 16:04
+ **/
 public class MultiSourceTrajectoryFusion {
     private static long time = System.currentTimeMillis();
 
@@ -53,6 +51,7 @@ public class MultiSourceTrajectoryFusion {
         String consumerGroupId = paraTool.get("con xcsumer.group.id", UUID.randomUUID().toString());
         System.out.println("consumerGroupId:" + consumerGroupId);
 
+        /*获取各个Topic的数据流*/
         DataStream<String> mmeStream = KafkaConsumer.createKafkaStream(env, "zz", "MMEConsumerGroup" + consumerGroupId, "DACP_RT_SDTP_S1MME_0", 360, SimpleStringSchema.class);
         DataStream<String> zxStream = KafkaConsumer.createKafkaStream(env, "jc", "ZXConsumerGroup" + consumerGroupId, "ZC_CS_ZX_ZJ_PO01", 50, SimpleStringSchema.class);
         DataStream<String> gsmStream = KafkaConsumer.createKafkaStream(env, "jc", "GSMConsumerGroup" + consumerGroupId, "B_EBU_GSM_NEW", 20, SimpleStringSchema.class);
@@ -61,6 +60,7 @@ public class MultiSourceTrajectoryFusion {
         DataStream<String> http4gStream = KafkaConsumer.createKafkaStream(env, "jc", "HTTP4GConsumerGroup" + consumerGroupId, "http_4g_lac", 60, SimpleStringSchema.class);
         DataStream<String> ottStream = KafkaConsumer.createKafkaStream(env, "jc", "OTTConsumerGroup" + consumerGroupId, "TOPIC_OTT", 2, SimpleStringSchema.class);
 
+        /*分别对各个Topic进行数据处理，封装为SignalFormat*/
         SingleOutputStreamOperator<SignalFormat> mmeFlatMapStream = mmeStream.flatMap(new MMEMapFlatFunction()).name("mmeFlatMap").setParallelism(360);
         SingleOutputStreamOperator<SignalFormat> zxFlatMapStream = zxStream.flatMap(new ZXFlatMapFunction()).name("zxFlatMap").setParallelism(50);
         SingleOutputStreamOperator<SignalFormat> gsmFlatMapMStream = gsmStream.flatMap(new GSMFlatMapFunction()).name("gsmFlatMap").setParallelism(20);
@@ -71,6 +71,7 @@ public class MultiSourceTrajectoryFusion {
 
         WindowedStream<SignalFormat, Tuple, TimeWindow> mmeWindowStream = mmeFlatMapStream.keyBy("phone").timeWindow(Time.of(3, TimeUnit.SECONDS));
 
+        /*保证每个窗口中获取的相同数据都是最新数据*/
         SingleOutputStreamOperator<SignalFormat> mmeReduceStream = mmeWindowStream.reduce(new ReduceFunction<SignalFormat>() {
             @Override
             public SignalFormat reduce(SignalFormat signalFormat1, SignalFormat signalFormat2) throws Exception {
@@ -92,6 +93,7 @@ public class MultiSourceTrajectoryFusion {
                 .union(http4gFlatMap4GStream)
                 .union(ottFlatMapStream);
 
+        /*保证内存数据始终最新*/
         SingleOutputStreamOperator<SignalFormat> fuseFilterStream = fuseStream.keyBy("phone")
                 .filter(new PhoneTimeFilterFunction())
                 .startNewChain()
@@ -107,6 +109,7 @@ public class MultiSourceTrajectoryFusion {
         );
         BroadcastStream<Map<String, BaseStationInfo>> broadcastState = baseInfoStream.broadcast(stateDescriptor);
 
+        /*匹配Oracle表：I_CDM_LACCI，获得属性：city，county*/
         SingleOutputStreamOperator<SignalFormat> fillInfoStream = fuseFilterStream.connect(broadcastState).process(new BroadcastProcessFunction<SignalFormat, Map<String, BaseStationInfo>, SignalFormat>() {
             ReadOnlyBroadcastState<String, BaseStationInfo> mapState;
             BaseStationInfo baseStationInfo;
@@ -131,12 +134,11 @@ public class MultiSourceTrajectoryFusion {
             }
         }).name("fillInfo");
 
-        //统计Multi参数数据量的情况
-        SingleOutputStreamOperator<SignalFormat> countStreamNum = fillInfoStream.map(data -> {
-            data.signalTime = TimeUtil.stampToDate(data.signalTime, "yyyyMMddHHmmss");
-            return data;
-        }).returns(TypeInformation.of(SignalFormat.class));
-
+        /*统计Topic:MULTIPLE_SOURCE_FUSION数据量情况*/
+//        SingleOutputStreamOperator<SignalFormat> countStreamNum = fillInfoStream.map(data -> {
+//            data.signalTime = TimeUtil.stampToDate(data.signalTime, "yyyyMMddHHmmss");
+//            return data;
+//        }).returns(TypeInformation.of(SignalFormat.class));
 //        countStreamNum.addSink(new MultiMonitor());
 
         SingleOutputStreamOperator<String> outputStream = fillInfoStream.map(data -> {

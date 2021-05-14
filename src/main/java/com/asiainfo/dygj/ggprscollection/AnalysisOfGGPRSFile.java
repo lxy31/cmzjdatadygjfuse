@@ -13,14 +13,12 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/***********************************
- *@Desc TODO
- *@ClassName AnalysisOfGGPRSFile
- *@Author DLX
- *@Data 2020/8/11 10:21
- *@Since JDK1.8
- *@Version 1.0
- ***********************************/
+/**
+ * @program: cmzjdatadygjfuse
+ * @description: 读取FTP（10.78.142.132 22）（10.78.142.154 22）上的数据
+ * @author: Mr.Deng -> Mr.Liu
+ * @create: 2021-05-14 16:04
+ **/
 public class AnalysisOfGGPRSFile {
 
     public static void main(String[] args) throws Exception {
@@ -32,8 +30,10 @@ public class AnalysisOfGGPRSFile {
         ));
         final ParameterTool paraTool = ParameterTool.fromArgs(args);
         env.getConfig().setGlobalJobParameters(paraTool);
+        /*定于全局参数，便于参数传递*/
         String ftpType = paraTool.get("ftp.type.id", "0");
         int sourceParallelism = paraTool.getInt("ftp.source.parallelism", 9);
+
         SingleOutputStreamOperator<String> line = env.addSource(new GGPRSFileSource()).setParallelism(sourceParallelism).startNewChain();
         //生产topic
 //        line.addSink(new GGRPSMonitor());

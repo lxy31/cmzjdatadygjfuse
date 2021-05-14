@@ -31,8 +31,9 @@ import java.util.concurrent.TimeUnit;
  *@Version 1.0
  ***********************************/
 public class DownloadToHDFS {
-//    com.asiainfo.dygj.datadownload.DownloadToHDFS
-    private static final OutputTag<SignalFormat> outputTag = new OutputTag<SignalFormat>("LateData"){};
+    private static final OutputTag<SignalFormat> outputTag = new OutputTag<SignalFormat>("LateData") {
+    };
+
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setRestartStrategy(RestartStrategies.failureRateRestart(
@@ -42,10 +43,10 @@ public class DownloadToHDFS {
         ));
         final ParameterTool paraTool = ParameterTool.fromArgs(args);
         env.getConfig().setGlobalJobParameters(paraTool);
-        String basePath = paraTool.get("save.hdfs.path","hdfs://nsfed/ns2/jc_zz_swrz/dygjoutput/MULTIPLE_SOURCE_FUSION_test/");
-        long sinkSize = Long.valueOf(paraTool.get("sink.file.size","1024"));
+        String basePath = paraTool.get("save.hdfs.path", "hdfs://nsfed/ns2/jc_zz_swrz/dygjoutput/MULTIPLE_SOURCE_FUSION_test/");
+        long sinkSize = Long.parseLong(paraTool.get("sink.file.size", "1024"));
         String consumerGroupId = paraTool.get("consumer.group.id", UUID.randomUUID().toString());
-        System.out.println("consumerGroupId:"+consumerGroupId);
+        System.out.println("consumerGroupId:" + consumerGroupId);
 
         DataStream<String> fusionStream = KafkaConsumer.createKafkaStream(env, "zz", "MULTIPLE_SOURCE_FUSION_test" + consumerGroupId, "MULTIPLE_SOURCE_FUSION_test", 60, SimpleStringSchema.class);
 
@@ -53,7 +54,7 @@ public class DownloadToHDFS {
             @Override
             public void flatMap(String s, Collector<SignalFormat> collector) throws Exception {
                 String[] fusionStrs = s.split(",", -1);
-                if (fusionStrs.length == 15 && !fusionStrs[1].equals("7")){
+                if (fusionStrs.length == 15 && !fusionStrs[1].equals("7")) {
                     SignalFormat fusionData = SignalFormat.of(fusionStrs[0], fusionStrs[1], fusionStrs[2], fusionStrs[3], fusionStrs[4],
                             fusionStrs[5], fusionStrs[6], fusionStrs[7], fusionStrs[8], fusionStrs[9],
                             fusionStrs[10], fusionStrs[11], fusionStrs[12], fusionStrs[13], fusionStrs[14]);

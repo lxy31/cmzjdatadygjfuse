@@ -21,15 +21,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-/***********************************
- *@Desc TODO
- *@ClassName OracleTestSource
- *@Author DLX
- *@Data 2020/8/11 14:24
- *@Since JDK1.8
- *@Version 1.0
- ***********************************/
-//DR_GGPRS_SX_0_20201016_44933000320201016135805697.D.dat
+/**
+ * @program: cmzjdatadygjfuse
+ * @description: 读取FTP（10.78.142.132 22）（10.78.142.154 22）上的数据
+ * @author: Mr.Deng -> Mr.Liu
+ * @create: 2021-05-14 16:04
+ **/
 public class GGPRSFileSource extends RichParallelSourceFunction<String> {
     private Map<Integer, String> ftp_map = new HashMap<Integer, String>();
     private boolean flag = true;

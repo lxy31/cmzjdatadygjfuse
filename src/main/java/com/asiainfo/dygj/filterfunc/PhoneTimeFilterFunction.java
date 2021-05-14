@@ -11,14 +11,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-/***********************************
- *@Desc TODO
- *@ClassName PhoneTimeFilterFunction
- *@Author DLX
- *@Data 2020/8/19 15:03
- *@Since JDK1.8
- *@Version 1.0
- ***********************************/
+/**
+ * @program: cmzjdatadygjfuse
+ * @description: 始终保持当前内存中存入的都是最新数据
+ * @author: Mr.Deng -> Mr.Liu
+ * @create: 2021-05-14 16:04
+ **/
 public class PhoneTimeFilterFunction extends RichFilterFunction<SignalFormat> {
     private final Map<String, String> timeMap = new HashMap<>();
     SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -32,13 +30,13 @@ public class PhoneTimeFilterFunction extends RichFilterFunction<SignalFormat> {
             if (!flag && formatDate.substring(14, 16).equals("59")) {
                 flag = true;
             }
-            //每小时清理一次过期状态
+            /*整点清除前一小时数据*/
             if (flag && formatDate.substring(14, 16).equals("00")) {
-                //使用迭代器的remove()方法删除元素
                 timeMap.entrySet().removeIf(entry -> Long.parseLong(entry.getValue()) < (System.currentTimeMillis() - (1000 * 60 * 60 * 24)));
                 System.out.println(timeMap.size());
                 flag = false;
             }
+            /*将最新数据和相同数据最新数据添加到内存中*/
             String phoneSaveTime = timeMap.get(signalFormat.phone);
             if (phoneSaveTime == null) {
                 timeMap.put(signalFormat.phone, signalFormat.signalTime);

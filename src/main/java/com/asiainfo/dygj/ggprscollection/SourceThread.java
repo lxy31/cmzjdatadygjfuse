@@ -11,14 +11,12 @@ import java.io.InputStreamReader;
 import java.util.Objects;
 
 
-/***********************************
- *@Desc TODO
- *@ClassName SourceThread
- *@Author DLX
- *@Data 2020/12/7 14:14
- *@Since JDK1.8
- *@Version 1.0
- ***********************************/
+/**
+ * @program: cmzjdatadygjfuse
+ * @description: 多线程读取FTP上文件
+ * @author: Mr.Deng -> Mr.Liu
+ * @create: 2021-05-14 16:04
+ **/
 public class SourceThread implements Runnable {
     private SourceFunction.SourceContext<String> sourceContext;
     private String inpath;
@@ -54,13 +52,13 @@ public class SourceThread implements Runnable {
                 sourceContext.collect(str);
             }
             System.out.println("ReadFileName:" + fileName);
-            //close 不可动
+            /*close 不可动*/
             in.close();
             reader.close();
             ftpClient.completePendingCommand();
-//            ftpClient.changeWorkingDirectory(inpath);
-//            //挪文件
-//            System.out.println("MoveFileName:" + fileOutPath + "/" + fileName + "\tResult:" + ftpClient.rename(fileName, fileOutPath + "/" + fileName));
+            ftpClient.changeWorkingDirectory(inpath);
+            //挪文件
+            System.out.println("MoveFileName:" + fileOutPath + "/" + fileName + "\tResult:" + ftpClient.rename(fileName, fileOutPath + "/" + fileName));
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
