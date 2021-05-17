@@ -2,7 +2,7 @@
   <artifact type="jar" name="cmzjdatadygjfuse:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/cmzjdatadygjfuse_jar</output-path>
     <root id="archive" name="cmzjdatadygjfuse.jar">
-      <element id="module-output" name="cmzjdatadygjfuse" />
+      <element id="module-output" name="cmzj-data-dygj-fuse" />
     </root>
   </artifact>
 </component>
